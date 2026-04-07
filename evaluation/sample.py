@@ -91,7 +91,7 @@ def sample():
     remainder = N_TOTAL % n_classes
     per_class = {rel: base + (1 if i < remainder else 0) for i, rel in enumerate(RELATION_TYPES)}
 
-    used_sentences = set()
+    used_sids = set()
     samples = []
 
     for rel in RELATION_TYPES:
@@ -104,18 +104,20 @@ def sample():
         for row in pool:
             if taken >= per_class[rel]:
                 break
-            sent = _get_sentence(row)
-            if sent in used_sentences:
+            sid = (row.get("doc_id"), row.get("paragraph_id"), row.get("sentence_id"))
+            if sid in used_sids:
                 continue
-            used_sentences.add(sent)
+            used_sids.add(sid)
             samples.append({
-                "doc_id":        row.get("doc_id"),
-                "country":       row.get("country", ""),
-                "sentence":      _get_sentence(row),
-                "entity_1":      row.get("entity_1"),
-                "h1":            row.get("h1"),
-                "entity_2":      row.get("entity_2"),
-                "h2":            row.get("h2"),
+                "doc_id":       row.get("doc_id"),
+                "country":      row.get("country", ""),
+                "paragraph_id": row.get("paragraph_id"),
+                "sentence_id":  row.get("sentence_id"),
+                "sentence":     _get_sentence(row),
+                "entity_1":     row.get("entity_1"),
+                "h1":           row.get("h1"),
+                "entity_2":     row.get("entity_2"),
+                "h2":           row.get("h2"),
                 "entities": [
                     {"entity": row.get("entity_1"), "helix": row.get("h1")},
                     {"entity": row.get("entity_2"), "helix": row.get("h2")},
@@ -204,7 +206,10 @@ def extend(n_per_class: int = 10) -> None:
     rows, _ = _load_cooccurrence()
 
     new_entries = []
-    seen_sents: set[str] = {e.get("sentence", "") for e in existing}
+    used_sids: set = {
+        (e.get("doc_id"), e.get("paragraph_id"), e.get("sentence_id"))
+        for e in existing
+    }
 
     for rel_class, pattern in _EXTEND_PATTERNS.items():
         taken = 0
@@ -213,9 +218,10 @@ def extend(n_per_class: int = 10) -> None:
             key = (row.get("doc_id"), row.get("entity_1"), row.get("entity_2"))
             if key in skip_keys:
                 continue
-            sent = _get_sentence(row)
-            if sent in seen_sents:
+            sid = (row.get("doc_id"), row.get("paragraph_id"), row.get("sentence_id"))
+            if sid in used_sids:
                 continue
+            sent = _get_sentence(row)
             if pattern.search(sent) and _is_clean_sentence(sent):
                 candidates.append(row)
 
@@ -223,20 +229,22 @@ def extend(n_per_class: int = 10) -> None:
             if taken >= n_per_class:
                 break
             key = (row.get("doc_id"), row.get("entity_1"), row.get("entity_2"))
-            sent = _get_sentence(row)
-            if sent in seen_sents:
+            sid = (row.get("doc_id"), row.get("paragraph_id"), row.get("sentence_id"))
+            if sid in used_sids:
                 skip_keys.add(key)
                 continue
             skip_keys.add(key)
-            seen_sents.add(sent)
+            used_sids.add(sid)
             new_entries.append({
-                "doc_id":        row.get("doc_id"),
-                "country":       row.get("country", ""),
-                "sentence":      sent,
-                "entity_1":      row.get("entity_1"),
-                "h1":            row.get("h1"),
-                "entity_2":      row.get("entity_2"),
-                "h2":            row.get("h2"),
+                "doc_id":       row.get("doc_id"),
+                "country":      row.get("country", ""),
+                "paragraph_id": row.get("paragraph_id"),
+                "sentence_id":  row.get("sentence_id"),
+                "sentence":     _get_sentence(row),
+                "entity_1":     row.get("entity_1"),
+                "h1":           row.get("h1"),
+                "entity_2":     row.get("entity_2"),
+                "h2":           row.get("h2"),
                 "entities": [
                     {"entity": row.get("entity_1"), "helix": row.get("h1")},
                     {"entity": row.get("entity_2"), "helix": row.get("h2")},
