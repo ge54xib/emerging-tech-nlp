@@ -95,10 +95,19 @@ def sample_cmd() -> None:
     if not cfg.FILE_COOCCURRENCE.exists():
         raise FileNotFoundError(f"Missing co-occurrence file: {cfg.FILE_COOCCURRENCE}")
 
+    # Exclude evaluation sentences to prevent data leakage
+    _eval_path = Path(__file__).parent.parent.parent / "evaluation" / "annotation.json"
+    eval_sids: set[tuple] = set()
+    if _eval_path.exists():
+        for e in json.loads(_eval_path.read_text(encoding="utf-8")):
+            eval_sids.add((str(e.get("doc_id", "")), int(e.get("paragraph_id", -1)), int(e.get("sentence_id", -1))))
+        print(f"[SetFit] Excluding {len(eval_sids)} evaluation sentences from training pool.")
+
     print("[SetFit] Scanning co-occurrence file …")
 
     # First pass: collect entities (cross-helix only) and sentence texts per key
-    entities_by_key: dict[tuple, dict[str, str]] = defaultdict(dict)
+    # Store (canonical_name, mention_text, helix) so we can check either against sentence
+    entities_by_key: dict[tuple, list[tuple[str, str, str]]] = defaultdict(list)
     central_by_key: dict[tuple, str] = {}
     window_by_key: dict[tuple, str] = {}
     cross_helix_keys: set[tuple] = set()
@@ -119,10 +128,23 @@ def sample_cmd() -> None:
 
             if row.get("h1") != row.get("h2"):
                 cross_helix_keys.add(key)
-                for ef, hf in [("entity_1", "h1"), ("entity_2", "h2")]:
-                    ent, helix = row.get(ef, ""), row.get(hf, "")
+                for ef, af, hf in [("entity_1", "actor_1", "h1"), ("entity_2", "actor_2", "h2")]:
+                    ent = row.get(ef, "")
+                    actor = row.get(af, {}) or {}
+                    mention = actor.get("mention_text", "") or ent
+                    helix = row.get(hf, "")
                     if ent:
-                        entities_by_key[key][ent] = helix
+                        entities_by_key[key].append((ent, mention, helix))
+
+    def _entities_in_sentence(key: tuple, sent_lower: str) -> list[dict]:
+        seen_entities = set()
+        result = []
+        for ent, mention, helix in entities_by_key[key]:
+            if ent.lower() in sent_lower or mention.lower() in sent_lower:
+                if ent not in seen_entities:
+                    seen_entities.add(ent)
+                    result.append({"entity": ent, "helix": helix})
+        return result
 
     # Deduplicate, stratify by helix-pair space
     seen: set[tuple] = set()
@@ -142,20 +164,20 @@ def sample_cmd() -> None:
         if not space_bucket:
             continue
 
-        window = window_by_key.get(key, central)
-        sent_lower = window.lower()
-        entities_in_sent = [
-            {"entity": ent, "helix": helix}
-            for ent, helix in entities_by_key[key].items()
-            if ent.lower() in sent_lower
-        ]
+        if key in eval_sids:
+            continue  # exclude evaluation sentences
+
+        central_lower = central.lower()
+        entities_in_sent = _entities_in_sentence(key, central_lower)
+        if not entities_in_sent:
+            continue  # skip if no entities appear in the central sentence
 
         by_space[space_bucket].append({
             "doc_id": str(row["doc_id"]),
             "paragraph_id": int(row["paragraph_id"]),
             "sentence_id": int(row["sentence_id"]),
             "central_sentence": central,   # used for training
-            "sentence": window,            # ±1 window for human review context
+            "sentence": central,           # central sentence only (clean)
             "entities": entities_in_sent,
             "space": "",                   # annotator label
         })
@@ -166,41 +188,61 @@ def sample_cmd() -> None:
     for key in cross_helix_keys:
         if key in seen:
             continue
+        if key in eval_sids:
+            continue
         central = central_by_key.get(key, "")
         if not any(kw in central.lower() for kw in PUBLIC_KEYWORDS):
             continue
         if (key[0], key[1], key[2]) in already_keys:
             continue
-        window = window_by_key.get(key, central)
-        sent_lower = window.lower()
-        entities_in_sent = [
-            {"entity": ent, "helix": helix}
-            for ent, helix in entities_by_key[key].items()
-            if ent.lower() in sent_lower
-        ]
+
+        central_lower = central.lower()
+        entities_in_sent = _entities_in_sentence(key, central_lower)
+        if not entities_in_sent:
+            continue  # skip if no entities appear in the central sentence
+
         by_space["public_space"].append({
             "doc_id": key[0],
             "paragraph_id": key[1],
             "sentence_id": key[2],
             "central_sentence": central,
-            "sentence": window,
+            "sentence": central,
             "entities": entities_in_sent,
             "space": "",
         })
 
+    # Load existing annotations to carry over manual labels
+    review_path = _review_path()
+    existing_labels: dict[tuple, str] = {}
+    existing_confidence: dict[tuple, str] = {}
+    if review_path.exists():
+        for e in json.loads(review_path.read_text(encoding="utf-8")):
+            if e.get("space"):
+                sid = (str(e.get("doc_id", "")), int(e.get("paragraph_id", -1)), int(e.get("sentence_id", -1)))
+                existing_labels[sid] = e["space"]
+                existing_confidence[sid] = e.get("confidence", "")
+
     random.seed(RANDOM_SEED)
     samples: list[dict] = []
+    carried_over = 0
     for space in SPACE_LABELS:
         pool = by_space[space]
         random.shuffle(pool)
         taken = pool[:N_PER_SPACE]
+        for entry in taken:
+            sid = (str(entry["doc_id"]), int(entry["paragraph_id"]), int(entry["sentence_id"]))
+            if sid in existing_labels:
+                entry["space"] = existing_labels[sid]
+                entry["confidence"] = existing_confidence.get(sid, "")
+                carried_over += 1
         samples.extend(taken)
         print(f"  {space}: {len(pool)} candidates → sampled {len(taken)}")
 
-    review_path = _review_path()
     review_path.write_text(json.dumps(samples, indent=2, ensure_ascii=False), encoding="utf-8")
     print(f"\n[SetFit] Wrote {len(samples)} entries to {review_path}")
-    print('Fill in the "space" field for each entry.')
+    if carried_over:
+        print(f"[SetFit] Carried over {carried_over} existing annotations.")
+    print('Fill in the "space" field for any unlabeled entries.')
     print(f"Valid labels: {', '.join(SPACE_LABELS)}")
 
 

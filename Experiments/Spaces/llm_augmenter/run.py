@@ -58,8 +58,10 @@ BATCH_SIZE       = 32
 # Signal words for public_space that guide constrained generation
 PUBLIC_SIGNAL_WORDS = [
     "public", "society", "citizen", "ethics", "equity",
-    "inclusion", "trust", "democratic", "governance",
-    "awareness", "engagement", "transparency", "accountability",
+    "inclusion", "trust", "democratic", "awareness", "engagement",
+    "transparency", "accountability", "culture", "media", "creative",
+    "gender", "diversity", "open-source", "legitimation", "community",
+    "life style", "innovation culture", "fourth helix",
 ]
 
 # Other helices to pair with civil_society for diversity
@@ -141,8 +143,10 @@ _AUGMENT_SYSTEM = (
 _AUGMENT_USER = """\
 Write a single sentence from a national quantum technology policy document that:
 1. Involves {entity_1} ({helix_1}) and {entity_2} ({helix_2}) as actors
-2. Describes civil society engagement, public awareness, ethics, equity, \
-or democratic oversight in the context of quantum technology
+2. Describes civil society, media, or cultural engagement with quantum technology; OR \
+public trust, ethics, equity, or democratic oversight; OR innovation culture, creative \
+industries, gender diversity in STEM, public legitimation of R&D, or open-source and \
+user community involvement
 3. Uses at least one of these signal words: {signal_words}
 
 Output only the sentence. No explanation, no quotes."""

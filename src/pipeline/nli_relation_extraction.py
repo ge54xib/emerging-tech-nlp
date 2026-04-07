@@ -77,7 +77,7 @@ SPACE_LABELS: dict[str, str] = {
     "knowledge_space":   "research collaboration, scientific knowledge creation, and R&D activities",
     "innovation_space":  "technology transfer, commercialisation, start-ups, intellectual property, and firm formation",
     "consensus_space":   "governance, policy dialogue, regulation, and strategic consensus building",
-    "public_space":      "civil society engagement, public benefit, ethics, and equitable access to technology",
+    "public_space":      "civil society engagement, media and culture, public trust, ethics, equity, innovation culture, creative industries, gender diversity, democratic oversight, and public legitimation of knowledge and technology",
     "no_explicit_space": "a general statement with no specific innovation space activity expressed",
 }
 

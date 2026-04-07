@@ -68,20 +68,29 @@ Based on Ranga & Etzkowitz (2013, pp. 244–246). Each entry shows a `sentence` 
 ---
 
 ### `public_space`
-**Definition (QH extension of R&E 2013):** The fourth helix — civil society as a full actor in the innovation system. Activities that engage the public, address societal concerns, ensure equitable access, or embed democratic oversight.
+**Definition (Quadruple Helix — Carayannis & Campbell 2009; R&E 2013):** The fourth helix — civil society, the media-based and culture-based public, and creative actors as full participants in the innovation system. Covers activities that engage the public, shape innovation culture, address societal concerns, ensure equitable access, or embed democratic oversight and legitimation.
 
 **Assign when the sentence describes:**
-- Public engagement, science communication, or citizen participation
-- Ethical considerations, responsible innovation, or societal impact
+- Public engagement, science communication, or citizen participation in innovation
+- Ethical considerations, responsible innovation, or societal impact assessment
 - Equity, inclusion, or access to quantum technology for underserved groups
 - Democratic oversight, public trust, or transparency of technology governance
 - Consumer protection or societal risk management
+- Media-based reality construction shaping public attitudes toward R&D or technology
+- Innovation culture, cultural values, or life styles as drivers of technology acceptance or rejection
+- Creative industries, arts, or the creative class as actors in the innovation ecosystem
+- Gender equity, diversity in STEM, or changing social images of technology
+- Public legitimation of knowledge and innovation policy (communicating R&D rationale to society)
+- Open-source movements, user communities, or democratising innovation (von Hippel)
+- PR strategies of research organisations or firms aimed at informing and persuading the public
 
-**Signal words:** public, society, citizen, community, ethics, responsible, trust, equity, inclusion, access, diversity, communication, awareness, engagement, societal, democratic, risk to society
+**Signal words:** public, citizen, society, community, culture, media, values, life style, art, creative, ethics, responsible, trust, equity, inclusion, access, diversity, communication, awareness, engagement, societal, democratic, legitimation, gender, open source, user community, innovation culture, fourth helix
 
 **Examples:**
 > "The strategy aims to ensure that the benefits of quantum technology are accessible to all citizens."
 > "Public trust in quantum technologies will be built through open science and ethical guidelines."
+> "Cultural attitudes toward science and media representations of quantum computing shape public support for R&D investment."
+> "The initiative promotes gender equity in quantum engineering by changing social images of the field."
 
 ---
 
