@@ -1,7 +1,14 @@
-# Annotation Codebook — Relation Types
-## NLI Evaluation (`annotation.json`)
+# Annotation Codebook — Relation Types & TH Spaces
+## Evaluation (`annotation.json`)
 
-Based on Ranga & Etzkowitz (2013). Each entry in `annotation.json` shows a sentence (`sent_text`) and two co-occurring actors (`entity_1`, `entity_2`). Assign the `true_relation` that best describes the relationship between the two actors **as expressed in that sentence**.
+Based on Ranga & Etzkowitz (2013). Each entry shows a `sentence` and two co-occurring actors (`entity_1`, `entity_2`). Fill in **both** fields:
+
+- `true_relation` — the relationship between `entity_1` and `entity_2` as expressed in the sentence
+- `true_space` — the TH innovation space expressed by the sentence (see `codebook_spaces.md`)
+
+---
+
+## `true_relation` Labels
 
 ---
 
@@ -122,7 +129,7 @@ Based on Ranga & Etzkowitz (2013). Each entry in `annotation.json` shows a sente
 
 ## Decision procedure
 
-1. Read `sent_text` carefully.
+1. Read `sentence` carefully.
 2. Identify which two actors are `entity_1` and `entity_2`.
 3. Ask: does the sentence describe a specific interaction between them?
    - No → `no_explicit_relation`
@@ -132,7 +139,7 @@ Based on Ranga & Etzkowitz (2013). Each entry in `annotation.json` shows a sente
    - `substitution` > `technology_transfer` > `collaborative_leadership` > `networking`
    - `collaboration_conflict_moderation` only when conflict is explicitly mentioned
 
-## Valid labels
+## Valid labels — `true_relation`
 ```
 technology_transfer
 collaboration_conflict_moderation
@@ -140,4 +147,29 @@ collaborative_leadership
 substitution
 networking
 no_explicit_relation
+```
+
+---
+
+## `true_space` Labels
+
+See **`codebook_spaces.md`** for full definitions and examples. Brief summary:
+
+| Label | When to assign |
+|---|---|
+| `knowledge_space` | Sentence describes R&D, scientific collaboration, education, or building research capabilities |
+| `innovation_space` | Sentence describes tech transfer, commercialisation, spin-offs, IP, incubators, or procurement |
+| `consensus_space` | Sentence describes governance, policy dialogue, strategy, regulation, or coordination |
+| `public_space` | Sentence describes public engagement, ethics, equity, or societal impact |
+| `no_explicit_space` | Sentence co-mentions actors but expresses no clear TH-space activity |
+
+**Key rule:** classify the *activity*, not the actors. Focus on the verb.
+
+## Valid labels — `true_space`
+```
+knowledge_space
+innovation_space
+consensus_space
+public_space
+no_explicit_space
 ```

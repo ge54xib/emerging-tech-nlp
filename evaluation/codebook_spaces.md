@@ -85,19 +85,38 @@ Based on Ranga & Etzkowitz (2013, pp. 244–246). Each entry shows a `sentence` 
 
 ---
 
+---
+
+### `no_explicit_space`
+**Definition:** The sentence does not clearly express any of the four TH space activities. The entities co-occur but the sentence is too generic, procedural, or descriptive to classify.
+
+**Assign when the sentence:**
+- Is a generic mention ("X and Y are involved in quantum technology")
+- Is a caption, title, or reference ("© Institute X and Company Y")
+- Lists actors without describing what they are doing
+- Is purely introductory or transitional ("This section covers the role of X and Y")
+
+**Examples:**
+> "Sydney Quantum Academy is a partnership between 4 universities backed by the NSW Government."
+> "The following organisations participated in the development of this strategy."
+
+---
+
 ## Decision procedure
 
-1. Read `sentence` carefully. Ignore the actor names — focus on the **verb** and **activity**.
+1. Read `sentence` carefully. Focus on the **verb** and **activity**, not the actor names.
 2. Ask: what is *happening* in this sentence?
    - Generating/sharing knowledge → `knowledge_space`
    - Turning knowledge into commercial value → `innovation_space`
    - Governing, coordinating, or setting strategy → `consensus_space`
    - Engaging public / addressing societal concerns → `public_space`
+   - No clear activity expressed → `no_explicit_space`
 3. If two spaces seem equally applicable, prefer the more specific one:
    - `public_space` > `consensus_space` (when civil society is the explicit subject)
    - `innovation_space` > `knowledge_space` (when commercialisation is the explicit activity)
 4. If the sentence is a policy aspiration about R&D ("we will invest in quantum research") → `consensus_space` (the act of investing/funding is governance) not `knowledge_space`.
 5. If the sentence lists activities across multiple spaces without a dominant one → pick the most prominent activity described.
+6. Only use `no_explicit_space` when you genuinely cannot identify a dominant activity — not as a shortcut for difficult cases.
 
 ## Valid labels
 ```
@@ -105,4 +124,5 @@ knowledge_space
 innovation_space
 consensus_space
 public_space
+no_explicit_space
 ```
