@@ -120,7 +120,7 @@ def _generate_reasoning(client, demo: dict, cache: dict) -> str:
 
     e1, e2 = demo["entity_1"], demo["entity_2"]
     label  = demo["true_relation"]
-    sent   = demo.get("central_sent_text") or demo["sent_text"]
+    sent   = demo.get("sentence") or demo.get("central_sent_text", "")
     prompt = (
         f"What are the clues that lead to the relation between {e1} and {e2} "
         f"to be {label} in the sentence '{sent}'? It is because: "
@@ -150,7 +150,7 @@ def _select_demos(
     """Entity-aware retrieval: prefer demos with matching (h1,h2) helix pair."""
     target_query = _entity_query(
         target["entity_1"], target["entity_2"],
-        target.get("central_sent_text") or target["sent_text"]
+        target.get("sentence") or target.get("central_sent_text", "")
     )
     target_emb = _embed([target_query], tokenizer, model, device)  # (1, D)
     sims = (demo_embeddings @ target_emb.T).squeeze(-1)            # (N,)
@@ -179,7 +179,7 @@ def _build_prompt(target: dict, selected_demos: list[dict], reasonings: list[str
     demo_blocks = []
     for demo, reasoning in zip(selected_demos, reasonings):
         sent = mark_entities_typed(
-            demo.get("central_sent_text") or demo["sent_text"],
+            demo.get("sentence") or demo.get("central_sent_text", ""),
             demo["entity_1"], demo["h1"], demo["entity_2"], demo["h2"]
         )
         demo_blocks.append(
@@ -191,7 +191,7 @@ def _build_prompt(target: dict, selected_demos: list[dict], reasonings: list[str
         )
 
     test_sent = mark_entities_typed(
-        target.get("central_sent_text") or target["sent_text"],
+        target.get("sentence") or target.get("central_sent_text", ""),
         target["entity_1"], target["h1"], target["entity_2"], target["h2"]
     )
     test_block = (
@@ -230,7 +230,7 @@ def predict(entries: list[dict], demos: list[dict]) -> tuple[list[str], list[str
     tokenizer, sim_model, device = _load_simcse()
     demo_queries = [
         _entity_query(d["entity_1"], d["entity_2"],
-                      d.get("central_sent_text") or d["sent_text"])
+                      d.get("sentence") or d.get("central_sent_text", ""))
         for d in demos
     ]
     # Embed in batches of 64
@@ -299,7 +299,7 @@ def main() -> None:
             "id":   i,
             "true": t,
             "pred": p,
-            "text": entries[i].get("central_sent_text") or entries[i]["sent_text"],
+            "text": entries[i].get("sentence") or entries[i].get("central_sent_text", ""),
         }
         for i, (t, p) in enumerate(zip(true_labels, pred_labels))
     ]
