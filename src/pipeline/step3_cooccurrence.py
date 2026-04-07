@@ -529,6 +529,7 @@ def run() -> None:
                     entities_per_sentence[sent_key][key[1]] = {
                         "entity_id": key[1],
                         "entity": entity_name,
+                        "mention_text": to_str(mention.get("mention", "")).strip(),
                         "actor_level": actor_level,
                         "helix": helix,
                         "mention_start_char": m_start,
@@ -546,9 +547,20 @@ def run() -> None:
                 sent_by_id = {s["sentence_id"]: s["text"] for s in para_sents}
                 central_sent_text = sent_by_id.get(sentence_id, "")
 
+                sent_lower = central_sent_text.lower()
                 for left, right in combinations(entities, 2):
                     h1 = to_str(left.get("helix", "")).strip()
                     h2 = to_str(right.get("helix", "")).strip()
+
+                    # Skip if either entity is not present in the sentence text
+                    def _in_sent(ent: dict) -> bool:
+                        return (
+                            (ent.get("entity") or "").lower() in sent_lower
+                            or (ent.get("mention_text") or "").lower() in sent_lower
+                        )
+                    if not _in_sent(left) or not _in_sent(right):
+                        continue
+
                     pair = "–".join(sorted([h1, h2]))
                     pair_counter[pair] += 1
 

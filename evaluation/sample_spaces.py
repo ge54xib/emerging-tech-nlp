@@ -46,6 +46,25 @@ SPACE_LABELS = ["knowledge_space", "innovation_space", "consensus_space", "publi
 N_PER_SPACE = 25
 RANDOM_SEED = 42
 
+_TABLE_ROW_PATTERN = re.compile(
+    r"^\s*[\d\-\•\*\|]|"
+    r"\t|"
+    r"\n.*\n|"
+    r"^\s*[A-Z][A-Z ]{10,}$",
+    re.MULTILINE,
+)
+
+def _is_clean_sentence(text: str) -> bool:
+    if len(text) < 40:
+        return False
+    if _TABLE_ROW_PATTERN.search(text):
+        return False
+    if not re.search(r"\b(is|are|was|were|will|would|has|have|had|"
+                     r"provide|support|develop|fund|establish|create|"
+                     r"promote|ensure|enable|build|strengthen|work)\b", text, re.IGNORECASE):
+        return False
+    return True
+
 PAIR_TO_SPACE = {
     frozenset({"academia", "government"}):     "knowledge_space",
     frozenset({"academia", "industry"}):       "innovation_space",
@@ -113,19 +132,7 @@ def sample():
             row = json.loads(line)
             rows_all.append(row)
 
-    # First pass: collect all entities per sentence key
-    for row in rows_all:
-        key = (str(row["doc_id"]), int(row["paragraph_id"]), int(row["sentence_id"]))
-        if row.get("h1") != row.get("h2"):
-            for ef, hf in [("entity_1", "h1"), ("entity_2", "h2")]:
-                ent = row.get(ef, "")
-                helix = row.get(hf, "")
-                if ent:
-                    entry = {"entity": ent, "helix": helix}
-                    if entry not in entities_by_key[key]:
-                        entities_by_key[key].append(entry)
-
-    # Second pass: build candidate pool per space
+    # Build candidate pool per space — entities filtered to those in sentence text
     for row in rows_all:
         if row.get("h1") == row.get("h2"):
             continue
@@ -135,20 +142,27 @@ def sample():
         seen_keys.add(key)
 
         central = row.get("central_sent_text") or row.get("sent_text", "")
-        if len(central) < 20:
+        if len(central) < 40:
             continue
         if central.strip() in training_sents:
+            continue
+        if not _is_clean_sentence(central):
             continue
 
         space = _pair_space(row.get("h1", ""), row.get("h2", ""))
         if not space:
             continue
 
+        entities = [
+            {"entity": row.get("entity_1"), "helix": row.get("h1")},
+            {"entity": row.get("entity_2"), "helix": row.get("h2")},
+        ]
+
         by_space[space].append({
-            "doc_id":    str(row["doc_id"]),
-            "country":   row.get("country", ""),
-            "sentence":  central,
-            "entities":  entities_by_key[key],
+            "doc_id":     str(row["doc_id"]),
+            "country":    row.get("country", ""),
+            "sentence":   central,
+            "entities":   entities,
             "true_space": "",
         })
 
